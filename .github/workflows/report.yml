@@ -3,34 +3,32 @@ name: Wildberries Report Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'  # каждый день в 9:00 по МСК
+    - cron: '0 6 * * *'  # запуск каждый день в 09:00 МСК
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    steps:
-      - name: Create creds folder and file
-        run: |
-            mkdir -p creds
-            echo "${{ secrets.GOOGLE_CREDS_JSON }}" > creds/service_account.json
 
-      - name: Checkout
+    steps:
+      - name: 🧬 Checkout репозитория
         uses: actions/checkout@v3
 
-      - name: Setup Python
+      - name: 🐍 Установка Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Установка зависимостей
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create creds file
+      - name: 📁 Создание папки и файла service_account.json
         run: |
+          mkdir -p creds
           echo "${{ secrets.GOOGLE_CREDS_JSON }}" > creds/service_account.json
 
-      - name: Run report
+      - name: 🚀 Запуск main.py
         env:
           SOURCE_SHEET_ID: ${{ secrets.SOURCE_SHEET_ID }}
           TARGET_SHEET_ID: ${{ secrets.TARGET_SHEET_ID }}
