@@ -3,6 +3,9 @@ import time
 import requests
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
+from oauth2client.service_account import ServiceAccountCredentials
+from io import StringIO
 
 # 🧪 Глобальные переменные окружения (используются GitHub Secrets)
 SOURCE_SHEET_ID = os.environ.get("SOURCE_SHEET_ID")
@@ -11,7 +14,13 @@ GOOGLE_CREDS_PATH = os.environ.get("GOOGLE_CREDS_PATH")
 
 # ⚙️ Настройки подключения к Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDS_PATH, scope)
+creds_json = os.environ.get("GOOGLE_CREDS_JSON")
+if not creds_json:
+    raise ValueError("GOOGLE_CREDS_JSON not set or empty!")
+
+# 🧠 Преобразуем в файл-like объект
+creds_dict = json.loads(creds_json)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
 # 📑 Чтение данных токенов и кабинетов

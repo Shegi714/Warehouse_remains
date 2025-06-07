@@ -28,13 +28,11 @@ jobs:
           mkdir -p creds
           echo "${{ secrets.GOOGLE_CREDS_B64 }}" | base64 --decode > creds/service_account.json
 
-      - name: 🐞 Проверка есть ли JSON
-        run: |
-          cat creds/service_account.json || echo "❌ Файл не создан!"
 
       - name: 🚀 Запуск Python-скрипта
         env:
           SOURCE_SHEET_ID: ${{ secrets.SOURCE_SHEET_ID }}
           TARGET_SHEET_ID: ${{ secrets.TARGET_SHEET_ID }}
-          GOOGLE_CREDS_PATH: creds/service_account.json
+          GOOGLE_CREDS_JSON: ${{ secrets.GOOGLE_CREDS_JSON }}
         run: python main.py
+
