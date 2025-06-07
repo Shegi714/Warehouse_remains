@@ -3,7 +3,7 @@ name: Wildberries Report Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'  # запуск каждый день в 09:00 МСК
+    - cron: '0 6 * * *'  # запуск каждый день в 9:00 МСК
 
 jobs:
   run:
@@ -23,12 +23,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 📁 Создание папки и файла service_account.json
+      - name: 📁 Распаковка GOOGLE_CREDS_B64 → JSON
         run: |
           mkdir -p creds
-          echo "${{ secrets.GOOGLE_CREDS_JSON }}" > creds/service_account.json
+          echo "${{ secrets.GOOGLE_CREDS_B64 }}" | base64 -d > creds/service_account.json
 
-      - name: 🚀 Запуск main.py
+      - name: 🚀 Запуск Python-скрипта
         env:
           SOURCE_SHEET_ID: ${{ secrets.SOURCE_SHEET_ID }}
           TARGET_SHEET_ID: ${{ secrets.TARGET_SHEET_ID }}
