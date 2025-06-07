@@ -1,9 +1,10 @@
 name: Wildberries Report Bot
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'  # запуск каждый день в 9:00 МСК
+    - cron: '0 */2 * * *'  # ⏱️ каждые 2 часа
+  workflow_dispatch:
+
 
 jobs:
   run:

@@ -26,7 +26,8 @@ client = gspread.authorize(creds)
 # 📑 Чтение данных токенов и кабинетов
 source_sheet = client.open_by_key(SOURCE_SHEET_ID).sheet1
 rows = source_sheet.get_all_values()[1:]
-data = [{"token": row[0], "cabinet": row[1]} for row in rows if len(row) >= 2 and row[0] and row[1]]
+data = [{"token": row[0], "cabinet": row[1]} for row in rows if len(row) >= 2 and row[0].strip()]
+
 
 # 📡 Параметры отчета
 params = {
@@ -111,40 +112,44 @@ def wait_for_report(token, task_id, cabinet_name, retries=20, delay=10):
 
 
 # 📊 Запись отчета в Google Sheets
+from datetime import datetime
+
 def write_report_to_sheet(sheet_obj, cabinet_name, report_data):
     try:
+        today = datetime.now().strftime("%d-%m-%Y")
+
         try:
             worksheet = sheet_obj.worksheet(cabinet_name)
             worksheet.clear()
         except gspread.exceptions.WorksheetNotFound:
-            worksheet = sheet_obj.add_worksheet(title=cabinet_name, rows="1000", cols="20")
+            worksheet = sheet_obj.add_worksheet(title=cabinet_name, rows="1000", cols="10")
 
-        headers = ["brand", "subjectName", "vendorCode", "nmId", "barcode", "techSize", "volume"]
-        warehouse_names = set()
-        for item in report_data:
-            for w in item.get("warehouses", []):
-                warehouse_names.add(w["warehouseName"])
-        headers += sorted(warehouse_names)
-
+        # Заголовки
+        headers = ["Дата", "nmId", "barcode", "", "", "В пути до получателей", "В пути возвраты на склад WB", "Всего находится на складах"]
         rows = [headers]
+
         for item in report_data:
-            base = [
-                item.get("brand", ""),
-                item.get("subjectName", ""),
-                item.get("vendorCode", ""),
-                item.get("nmId", ""),
-                item.get("barcode", ""),
-                item.get("techSize", ""),
-                item.get("volume", "")
+            nm_id = item.get("nmId", "")
+            barcode = item.get("barcode", "")
+            warehouses = {w["warehouseName"]: w["quantity"] for w in item.get("warehouses", [])}
+
+            row = [
+                today,
+                nm_id,
+                barcode,
+                "", "",  # D, E — пропущены по ТЗ
+                warehouses.get("В пути до получателей", 0),
+                warehouses.get("В пути возвраты на склад WB", 0),
+                warehouses.get("Всего находится на складах", 0)
             ]
-            quantities = {w["warehouseName"]: w["quantity"] for w in item.get("warehouses", [])}
-            qty_row = [quantities.get(name, 0) for name in sorted(warehouse_names)]
-            rows.append(base + qty_row)
+            rows.append(row)
 
         worksheet.update(rows)
-        print(f"✅ Отчет записан в лист: {cabinet_name}")
+        print(f"✅ Сохранено в лист '{cabinet_name}'")
+
     except Exception as e:
-        print(f"🛑 Ошибка записи в Google Sheet '{cabinet_name}': {e}")
+        print(f"🛑 Ошибка при записи в лист '{cabinet_name}': {e}")
+
 
 # 🚀 Главная функция
 def main():
