@@ -9,6 +9,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
+      - name: Create creds folder and file
+        run: |
+            mkdir -p creds
+            echo "${{ secrets.GOOGLE_CREDS_JSON }}" > creds/service_account.json
+
       - name: Checkout
         uses: actions/checkout@v3
 
