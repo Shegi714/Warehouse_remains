@@ -27,8 +27,8 @@ jobs:
         run: |
           mkdir -p creds
           echo "${{ secrets.GOOGLE_CREDS_B64 }}" | base64 -decode > creds/service_account.json
-      - name:
-          🐞 Проверка: есть ли JSON
+
+      - name: 🐞 Проверка есть ли JSON
         run: |
           cat creds/service_account.json || echo "❌ Файл не создан!"
 
