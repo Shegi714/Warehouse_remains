@@ -68,7 +68,7 @@ def create_report(token, retries=3, delay=5):
     return None
 
 # ⏳ Проверка готовности отчета (до 5 попыток)
-def wait_for_report(token, task_id, retries=5, delay=10):
+def wait_for_report(token, task_id, cabinet_name, retries=20, delay=10):
     url = f"https://seller-analytics-api.wildberries.ru/api/v1/warehouse_remains/tasks/{task_id}/download"
     headers = {
         "accept": "application/json",
@@ -76,20 +76,39 @@ def wait_for_report(token, task_id, retries=5, delay=10):
         "User-Agent": "Mozilla/5.0"
     }
 
+    print(f"⏳ Ждём 10 секунд перед первой проверкой taskId для кабинета {cabinet_name}...")
+    time.sleep(delay)  # 💥 Принудительная первая задержка
+
     for attempt in range(1, retries + 1):
         try:
-            print(f"⏳ [{attempt}/{retries}] Проверка готовности отчета...")
+            print(f"🔁 [{attempt}/{retries}] Проверка готовности отчета для {cabinet_name}...")
             response = requests.get(url, headers=headers, timeout=30)
+
             if response.status_code == 200:
-                print("📥 Отчет готов, данные загружены.")
+                print(f"✅ Отчет для {cabinet_name} готов.")
                 return response.json()
+
+            elif response.status_code == 401:
+                print(f"❌ Токен для {cabinet_name} нерабочий (401 Unauthorized).")
+                return None
+
+            elif response.status_code == 429:
+                print(f"⚠️ Слишком много запросов (429). Ждём {delay}s...")
+
+            elif response.status_code == 404:
+                print(f"ℹ️ Отчет ещё не готов (404). Ждём...")
+
             else:
-                print(f"🔁 Ответ {response.status_code}, ждем...")
+                print(f"❗ Неожиданный код ответа {response.status_code}: {response.text}")
+
         except Exception as e:
-            print(f"⚠️ Ошибка при получении отчета: {e}")
+            print(f"⚠️ Ошибка при проверке отчета для {cabinet_name}: {e}")
+
         time.sleep(delay)
-    print("❌ Отчет не был готов вовремя.")
+
+    print(f"❌ Превышено количество попыток для {cabinet_name}. Отчет не получен.")
     return None
+
 
 # 📊 Запись отчета в Google Sheets
 def write_report_to_sheet(sheet_obj, cabinet_name, report_data):
