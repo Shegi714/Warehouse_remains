@@ -43,7 +43,7 @@ params = {
 }
 
 # 🔁 Ретрий создания отчета
-def create_report(token, retries=3, delay=5):
+def create_report(token, cabinet_name, retries=3, delay=5):
     url = "https://seller-analytics-api.wildberries.ru/api/v1/warehouse_remains"
     headers = {
         "accept": "application/json",
@@ -53,20 +53,31 @@ def create_report(token, retries=3, delay=5):
 
     for attempt in range(1, retries + 1):
         try:
-            print(f"📡 [{attempt}/{retries}] Создание отчета...")
+            print(f"📡 [{attempt}/{retries}] Создание отчета для {cabinet_name}...")
             response = requests.get(url, headers=headers, params=params, timeout=30)
+
+            if response.status_code == 401:
+                print(f"❌ Токен для {cabinet_name} нерабочий (401 Unauthorized). Пропускаем без повторов.")
+                return None
+
             response.raise_for_status()
-            json_data = response.json()
-            task_id = json_data.get("data", {}).get("taskId") or json_data.get("taskId")
+
+            data = response.json()
+            task_id = data.get("data", {}).get("taskId") or data.get("taskId")
             if task_id:
                 print(f"✅ Получен taskId: {task_id}")
                 return task_id
             else:
-                print(f"❗ Нет taskId в ответе: {json_data}")
+                print(f"⚠️ Нет taskId в ответе: {data}")
+
         except Exception as e:
-            print(f"⚠️ Ошибка запроса: {e}")
+            print(f"⚠️ Ошибка при создании отчета для {cabinet_name}: {e}")
+
         time.sleep(delay)
+
+    print(f"❌ Превышено количество попыток для {cabinet_name}.")
     return None
+
 
 # ⏳ Проверка готовности отчета (до 5 попыток)
 def wait_for_report(token, task_id, cabinet_name, retries=20, delay=10):
@@ -160,7 +171,7 @@ def main():
         token = entry["token"]
         print(f"\n🔄 Работаем с кабинетом: {cabinet}")
 
-        task_id = create_report(token)
+        task_id = create_report(token, cabinet)
         if not task_id:
             print(f"❌ Пропуск {cabinet}, не удалось создать отчет.")
             continue
