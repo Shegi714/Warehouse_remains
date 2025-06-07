@@ -160,7 +160,7 @@ def main():
             print(f"❌ Пропуск {cabinet}, не удалось создать отчет.")
             continue
 
-        report = wait_for_report(token, task_id)
+        report = wait_for_report(token, task_id, cabinet)
         if not report:
             print(f"❌ Пропуск {cabinet}, отчет не готов.")
             continue
