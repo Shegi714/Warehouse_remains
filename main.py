@@ -80,7 +80,7 @@ def create_report(token, cabinet_name, retries=3, delay=5):
 
 
 # ⏳ Проверка готовности отчета (до 5 попыток)
-def wait_for_report(token, task_id, cabinet_name, retries=20, delay=10):
+def wait_for_report(token, task_id, cabinet_name, retries=20, delay=15):
     url = f"https://seller-analytics-api.wildberries.ru/api/v1/warehouse_remains/tasks/{task_id}/download"
     headers = {
         "accept": "application/json",
